@@ -3,129 +3,125 @@
 <head>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        body, html {
-            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
-            background: #000; font-family: 'Courier New', monospace;
-        }
+        body, html { margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden; background: #000; font-family: 'Courier New', monospace; }
 
-        /* 1. HOME MENU */
-        #menu-view {
+        /* THE LOADING SCREEN - Ensures assets appear */
+        #loading-screen {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.8); color: white; z-index: 1000;
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            background: #000; z-index: 2000; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; color: white;
         }
 
-        .btn { padding: 15px 50px; font-size: 20px; cursor: pointer; margin: 10px; background: #1d4ed8; color: white; border: 2px solid white; }
-
-        /* 2. GAME AREA & MOVING BACKGROUND */
-        #game-area {
-            display: none; width: 100%; height: 100%;
-            background-image: url("https://cdnb.artstation.com/p/assets/images/images/011/445/369/large/remi-delmotte-hueco-mundo.jpg?1529609712&dl=1");
-            background-size: cover; background-repeat: repeat-x;
-            position: relative;
-            animation: scrollMap 10s linear infinite;
+        /* THE HUECO MUNDO BACKGROUND */
+        #game-stage {
+            display: none; width: 100%; height: 100%; position: relative;
+            background-image: url("https://cdnb.artstation.com/p/assets/images/images/011/445/369/large/remi-delmotte-hueco-mundo.jpg?1529609712");
+            background-size: cover; background-position: bottom; background-repeat: repeat-x;
+            animation: moveWorld 20s linear infinite;
         }
 
-        @keyframes scrollMap {
-            from { background-position: 0 0; }
-            to { background-position: -2000px 0; }
-        }
+        @keyframes moveWorld { from { background-position: 0 0; } to { background-position: -2000px 0; } }
 
-        /* 3. SONIC SPRITE (Replaced Blue Circle) */
+        /* SONIC SPRITE - Sized based on your reference image */
         #sonic {
-            position: absolute; 
-            width: 140px; height: 140px; 
+            position: absolute; bottom: 120px; left: 100px;
+            width: 140px; height: 140px; z-index: 100;
             background: url(https://docs.google.com/drawings/d/e/2PACX-1vSU2kymmebcoyonKiAeVWtczSiq12r7yeOqHpCD1P40lBrVvg-8P1cCEvyPFQMyNMn5G2g4cHHJT0Gz/pub?w=960&h=720);
-            background-size: 960px 720px;
-            background-position: -4px -96px; /* Sonic Standing/Running frame */
-            bottom: 80px; left: 100px; z-index: 50;
+            background-size: 960px 720px; background-position: -4px -96px;
         }
 
-        /* 4. RINGS (On the ground) */
+        /* HUD - Classic Yellow Rings and White Text */
+        #hud { position: absolute; top: 20px; left: 20px; z-index: 500; color: #facc15; font-size: 28px; font-weight: bold; text-shadow: 2px 2px #000; }
+        
+        /* GAME BUTTONS */
+        #ui-layer { position: absolute; bottom: 30px; width: 100%; display: flex; justify-content: space-around; z-index: 1000; }
+        .control-btn {
+            width: 90px; height: 90px; border-radius: 50%; border: 4px solid white;
+            background: rgba(0,0,0,0.5); color: white; display: flex; align-items: center; 
+            justify-content: center; font-weight: bold; cursor: pointer;
+        }
+        #roll-btn.ready { background: #1d4ed8; box-shadow: 0 0 15px #00BFFF; }
+
         .ring {
-            position: absolute; 
-            width: 60px; height: 60px; 
+            position: absolute; width: 50px; height: 50px; bottom: 140px; right: -50px;
             background: url(https://docs.google.com/drawings/d/e/2PACX-1vSU2kymmebcoyonKiAeVWtczSiq12r7yeOqHpCD1P40lBrVvg-8P1cCEvyPFQMyNMn5G2g4cHHJT0Gz/pub?w=960&h=720);
-            background-size: 960px 720px;
-            background-position: -96px 0px; /* Ring frame */
-            bottom: 100px; right: -60px;
+            background-size: 960px 720px; background-position: -96px 0px;
         }
-
-        #hud { position: absolute; top: 20px; left: 20px; color: yellow; font-size: 30px; font-weight: bold; text-shadow: 2px 2px #000; }
     </style>
 </head>
 <body>
 
-    <div id="menu-view">
-        <h1 style="font-size: 50px;">SONIC RUNNER</h1>
-        <button class="btn" onclick="startLoading()">PLAY GAME</button>
-        <button class="btn" onclick="alert('Sonic, Knuckles, and more coming soon!')">CHARACTERS</button>
+    <div id="loading-screen">
+        <h2 id="status">INITIALIZING...</h2>
+        <button id="start-btn" style="display:none; padding:10px 40px;" onclick="startGame()">ENTER WORLD</button>
     </div>
 
-    <div id="game-area">
-        <div id="hud">RINGS: <span id="r-count">0</span></div>
+    <div id="game-stage">
+        <div id="hud">RINGS: <span id="ring-val">0</span></div>
         <div id="sonic"></div>
+        
+        <div id="ui-layer">
+            <div class="control-btn" id="jump-btn" onmousedown="jump()">JUMP</div>
+            <div class="control-btn" id="roll-btn">ROLL</div>
+        </div>
     </div>
 
 <script>
-    var rings = 0;
-    var isJumping = false;
-    var ringAudio = new Audio('https://docs.google.com/uc?export=download&id=1ETKypIjRUWk4m4rle2X9nihfnzY7Ur4C');
+    let rings = 0;
+    let boost = 0;
+    let isJumping = false;
+    const ringSfx = new Audio('https://docs.google.com/uc?export=download&id=1ETKypIjRUWk4m4rle2X9nihfnzY7Ur4C');
 
-    function startLoading() {
-        $("#menu-view").fadeOut();
-        $("#game-area").fadeIn();
-        spawnGroundRing();
+    // Preload Check
+    window.onload = () => {
+        $("#status").text("READY");
+        $("#start-btn").show();
+    };
+
+    function startGame() {
+        $("#loading-screen").fadeOut();
+        $("#game-stage").show();
+        spawnRing();
     }
 
-    // JUMPING
-    $(document).on('keydown', function(e) {
-        if ((e.keyCode == 32 || e.keyCode == 38) && !isJumping) {
-            isJumping = true;
-            // Switch to Jump frame
-            $("#sonic").css("background-position", "-192px -96px"); 
-            
-            $("#sonic").animate({ bottom: "280px" }, 400).animate({ bottom: "80px" }, 400, function() {
-                isJumping = false;
-                // Switch back to Run frame
-                $("#sonic").css("background-position", "-4px -96px");
-            });
-        }
-    });
-
-    // GROUND RINGS
-    function spawnGroundRing() {
-        var ringId = "ring" + Date.now();
-        $("#game-area").append('<div id="' + ringId + '" class="ring"></div>');
-        var currentRing = $("#" + ringId);
-
-        // Move Ring Right to Left
-        currentRing.animate({ right: "110%" }, 2500, "linear", function() {
-            $(this).remove();
+    function jump() {
+        if(isJumping) return;
+        isJumping = true;
+        $("#sonic").css("background-position", "-192px -96px"); // Jump Frame
+        $("#sonic").animate({bottom: "+=180px"}, 400).animate({bottom: "120px"}, 400, function(){
+            isJumping = false;
+            $("#sonic").css("background-position", "-4px -96px"); // Back to Run
         });
+    }
 
-        // HIT DETECTION
-        var checkHit = setInterval(function() {
-            var s = $("#sonic").offset();
-            var r = currentRing.offset();
-            if (r) {
-                var dx = Math.abs(s.left - r.left);
-                var dy = Math.abs(s.top - r.top);
-                if (dx < 70 && dy < 70) {
-                    rings++;
-                    $("#r-count").text(rings);
-                    ringAudio.play();
-                    currentRing.remove();
-                    clearInterval(checkHit);
-                }
-            } else {
-                clearInterval(checkHit);
+    function spawnRing() {
+        let rId = "ring_" + Date.now();
+        $("#game-stage").append(`<div id="${rId}" class="ring"></div>`);
+        let $r = $("#" + rId);
+
+        $r.animate({ right: "110%" }, 2500, "linear", function() { $(this).remove(); });
+
+        let hitTimer = setInterval(() => {
+            let sPos = $("#sonic").offset();
+            let rPos = $r.offset();
+            if(rPos && Math.abs(sPos.left - rPos.left) < 70 && Math.abs(sPos.top - rPos.top) < 70) {
+                rings++;
+                boost += 10;
+                $("#ring-val").text(rings);
+                ringSfx.currentTime = 0;
+                ringSfx.play();
+                $r.remove();
+                clearInterval(hitTimer);
+                
+                if(boost >= 70) $("#roll-btn").addClass("ready");
             }
         }, 50);
 
-        setTimeout(spawnGroundRing, Math.random() * 1500 + 800);
+        setTimeout(spawnRing, Math.random() * 1500 + 800);
     }
-</script>
 
+    // Keyboard support
+    $(window).keydown((e) => { if(e.keyCode == 32 || e.keyCode == 38) jump(); });
+</script>
 </body>
 </html>
