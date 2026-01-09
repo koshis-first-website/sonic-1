@@ -5,122 +5,138 @@
     <style>
         body, html {
             margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+            background: #000; font-family: 'Arial', sans-serif;
+        }
+
+        /* SHARED BACKGROUND */
+        #master-container {
+            width: 100%; height: 100%;
             background-image: url("https://cdnb.artstation.com/p/assets/images/images/011/445/369/large/remi-delmotte-hueco-mundo.jpg?1529609712&dl=1");
-            background-size: cover; background-position: center; font-family: 'Courier New', monospace;
+            background-size: cover; background-position: center;
+            position: relative;
         }
 
-        /* 1. HOME MENU */
-        #home-menu {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0, 0, 0, 0.85); z-index: 100;
+        /* OVERLAYS */
+        .overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
             display: flex; flex-direction: column; align-items: center; justify-content: center;
-            color: white; text-align: center;
+            background: rgba(0,0,0,0.7); color: white; z-index: 100;
         }
-
-        /* 2. LOADING SCREEN (Hidden initially) */
-        #loading-screen {
-            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: #000; z-index: 150; flex-direction: column; align-items: center; justify-content: center;
-            color: #60a5fa;
-        }
-        #load-bar-bg { width: 300px; height: 10px; background: #333; border: 2px solid white; margin-top: 20px; border-radius: 5px; overflow: hidden; }
-        #load-bar-fill { width: 0%; height: 100%; background: #60a5fa; transition: 0.1s; }
 
         .menu-btn {
             background: #1d4ed8; color: white; border: 3px solid white;
-            padding: 15px 50px; margin: 10px; font-size: 24px; cursor: pointer;
-            width: 320px; transition: 0.3s; border-radius: 10px;
+            padding: 15px 40px; margin: 10px; font-size: 20px; cursor: pointer;
+            width: 250px; border-radius: 8px;
         }
 
-        /* 3. GAME AREA */
-        #game-area { display: none; width: 100%; height: 100%; position: relative; }
-        #hud { position: absolute; top: 10px; left: 20px; color: #facc15; font-size: 24px; font-weight: bold; z-index: 10; text-shadow: 2px 2px #000; }
+        /* LOADING BAR */
+        #load-bar { width: 250px; height: 15px; border: 2px solid white; margin-top: 10px; }
+        #load-fill { width: 0%; height: 100%; background: #60a5fa; }
+
+        /* GAME STUFF */
+        #game-layer { display: none; width: 100%; height: 100%; position: absolute; top: 0; left: 0; }
         
-        /* SPRITES */
         #sonic {
-            position: absolute; top: 350px; left: 100px; width: 140px; height: 140px;
+            position: absolute; width: 140px; height: 140px;
             background: url(https://docs.google.com/drawings/d/e/2PACX-1vSU2kymmebcoyonKiAeVWtczSiq12r7yeOqHpCD1P40lBrVvg-8P1cCEvyPFQMyNMn5G2g4cHHJT0Gz/pub?w=960&h=720);
-            background-size: 960px 720px; z-index: 5; background-position: left 0in top -1in;
+            background-size: 960px 720px; background-position: left 0in top -1in;
+            top: 350px; left: 50px; z-index: 10;
         }
-        .state-roll { background-position: left -1in top 0in !important; animation: fastSpin 0.15s infinite linear; }
-        @keyframes fastSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-        
-        #ring { position: absolute; width: 60px; height: 60px; background: url(https://docs.google.com/drawings/d/e/2PACX-1vSU2kymmebcoyonKiAeVWtczSiq12r7yeOqHpCD1P40lBrVvg-8P1cCEvyPFQMyNMn5G2g4cHHJT0Gz/pub?w=960&h=720) left -1in top 0in; }
+
+        #ring {
+            position: absolute; width: 60px; height: 60px;
+            background: url(https://docs.google.com/drawings/d/e/2PACX-1vSU2kymmebcoyonKiAeVWtczSiq12r7yeOqHpCD1P40lBrVvg-8P1cCEvyPFQMyNMn5G2g4cHHJT0Gz/pub?w=960&h=720);
+            background-size: 960px 720px; background-position: left -1in top 0in;
+            display: none;
+        }
+
+        #score-board { position: absolute; top: 20px; left: 20px; color: #facc15; font-size: 30px; font-weight: bold; text-shadow: 2px 2px #000; }
     </style>
 </head>
 <body>
 
-    <div id="home-menu">
-        <h1 style="font-size: 50px; margin-bottom: 40px;">KOSHISH RUNNER</h1>
-        <button class="menu-btn" onclick="startLoading()">PLAY GAME</button>
-        <button class="menu-btn" onclick="alert('High Score: ' + (localStorage.getItem('sonicHS') || 0))">HIGH SCORE</button>
+<div id="master-container">
+    <div id="menu-view" class="overlay">
+        <h1>KOSHISH SONIC</h1>
+        <button class="menu-btn" onclick="startLoadingPhase()">PLAY GAME</button>
+        <button class="menu-btn" onclick="alert('Score: ' + (localStorage.getItem('sonic_score') || 0))">HIGH SCORE</button>
     </div>
 
-    <div id="loading-screen">
-        <h2 id="load-text">LOADING LEVEL...</h2>
-        <div id="load-bar-bg"><div id="load-bar-fill"></div></div>
+    <div id="loading-view" class="overlay" style="display:none;">
+        <h2>LOADING...</h2>
+        <div id="load-bar"><div id="load-fill"></div></div>
     </div>
 
-    <div id="game-area">
-        <div id="hud">RINGS: <span id="ring-count">0</span></div>
+    <div id="game-layer">
+        <div id="score-board">RINGS: <span id="r-val">0</span></div>
         <div id="sonic"></div>
         <div id="ring"></div>
     </div>
+</div>
 
-    <script>
-        var rings = 0;
-        var ringAudio = new Audio('https://docs.google.com/uc?export=download&id=1ETKypIjRUWk4m4rle2X9nihfnzY7Ur4C');
+<script>
+    var ringCount = 0;
+    var audio = new Audio('https://docs.google.com/uc?export=download&id=1ETKypIjRUWk4m4rle2X9nihfnzY7Ur4C');
 
-        function startLoading() {
-            $("#home-menu").hide();
-            $("#loading-screen").css("display", "flex");
-            
-            let progress = 0;
-            let interval = setInterval(() => {
-                progress += Math.floor(Math.random() * 10) + 2;
-                $("#load-bar-fill").css("width", progress + "%");
-                
-                if (progress >= 100) {
-                    clearInterval(interval);
-                    $("#load-bar-fill").css("width", "100%");
-                    setTimeout(initGame, 500);
-                }
-            }, 100);
-        }
+    // PHASE 1: LOADING
+    function startLoadingPhase() {
+        $("#menu-view").hide();
+        $("#loading-view").show();
+        
+        var p = 0;
+        var t = setInterval(function() {
+            p += 5;
+            $("#load-fill").css("width", p + "%");
+            if(p >= 100) {
+                clearInterval(t);
+                runGameNow();
+            }
+        }, 50);
+    }
 
-        function initGame() {
-            $("#loading-screen").fadeOut();
-            $("#game-area").fadeIn();
-            spawnRing();
-        }
+    // PHASE 2: RUN GAME
+    function runGameNow() {
+        $("#loading-view").fadeOut();
+        $("#game-layer").show();
+        
+        // Start the Ring Drop
+        dropRing();
 
-        function collectRing() {
-            rings++;
-            ringAudio.pause(); ringAudio.currentTime = 0; ringAudio.play();
-            $("#ring-count").text(rings);
-            
-            // Save High Score
-            let hs = localStorage.getItem('sonicHS') || 0;
-            if (rings > hs) localStorage.setItem('sonicHS', rings);
-        }
-
-        // MOVEMENT
-        $(window).keydown(function(e) {
-            let sPos = $("#sonic").position();
-            if (e.key == "ArrowRight") $("#sonic").css({"left": sPos.left + 40, "transform": "scaleX(1)"});
-            if (e.key == "ArrowLeft") $("#sonic").css({"left": sPos.left - 40, "transform": "scaleX(-1)"});
+        // Key Listeners
+        $(document).keydown(function(e) {
+            var s = $("#sonic").position();
+            if(e.keyCode == 39) { // Right
+                $("#sonic").css({"left": s.left + 50, "transform": "scaleX(1)"});
+            }
+            if(e.keyCode == 37) { // Left
+                $("#sonic").css({"left": s.left - 50, "transform": "scaleX(-1)"});
+            }
         });
+    }
 
-        function spawnRing() {
-            let rx = Math.random() * (window.innerWidth - 100);
-            $("#ring").css({"top": "-50px", "left": rx}).show();
-            $("#ring").animate({ top: "450px" }, 2000, "linear", function() {
-                let sPos = $("#sonic").position();
-                let rPos = $("#ring").position();
-                if (Math.abs(sPos.left - rPos.left) < 80) collectRing();
-                spawnRing();
-            });
-        }
-    </script>
+    // RING LOGIC
+    function dropRing() {
+        var winW = $(window).width() - 100;
+        var startX = Math.floor(Math.random() * winW);
+        
+        $("#ring").stop().css({"top": "-60px", "left": startX, "display": "block"});
+        
+        $("#ring").animate({ top: "450px" }, 2500, "linear", function() {
+            var sLeft = $("#sonic").position().left;
+            var rLeft = $("#ring").position().left;
+
+            // Simple Hitbox
+            if (Math.abs(sLeft - rLeft) < 70) {
+                ringCount++;
+                $("#r-val").text(ringCount);
+                audio.play();
+                localStorage.setItem('sonic_score', ringCount);
+            }
+            
+            dropRing(); // Loop
+        });
+    }
+</script>
+
 </body>
 </html>
