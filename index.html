@@ -3,132 +3,125 @@
 <head>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <style>
-        body { background: #000; margin: 0; overflow: hidden; font-family: 'Courier New', monospace; }
-
-        /* HUD STYLES */
-        #hud { position: absolute; top: 10px; left: 100px; color: white; font-size: 24px; text-shadow: 2px 2px black; z-index: 10; }
-        
-        /* BOOST METER & BUTTON */
-        #boost-container { margin-top: 10px; display: flex; align-items: center; gap: 15px; }
-        #boost-bar { width: 150px; height: 12px; background: #333; border: 2px solid white; border-radius: 5px; overflow: hidden; }
-        #boost-fill { height: 100%; width: 0%; background: #00BFFF; transition: 0.1s; }
-        
-        #roll-btn {
-            width: 60px; height: 60px; border-radius: 50%; border: 4px solid white;
-            background: #555; /* Default Gray */
-            color: white; font-weight: bold; cursor: not-allowed;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 0 10px rgba(0,0,0,0.5); transition: 0.3s;
+        body, html {
+            margin: 0; padding: 0; width: 100%; height: 100%; overflow: hidden;
+            background-image: url("https://cdnb.artstation.com/p/assets/images/images/011/445/369/large/remi-delmotte-hueco-mundo.jpg?1529609712&dl=1");
+            background-size: cover; background-position: center; font-family: 'Courier New', monospace;
         }
-        #roll-btn.ready { background: #1d4ed8; cursor: pointer; box-shadow: 0 0 20px #00BFFF; }
-        #roll-btn.active { background: #facc15; animation: pulse 0.5s infinite; }
 
-        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        /* HUD & HEARTS */
+        #hud { position: absolute; top: 10px; left: 20px; color: #facc15; font-size: 28px; font-weight: bold; text-shadow: 2px 2px #000; z-index: 10; }
+        .heart { display: inline-block; width: 25px; height: 25px; background: red; clip-path: polygon(50% 15%, 80% 0%, 100% 30%, 50% 90%, 0% 30%, 20% 0%); margin-right: 5px; }
+        .lost { background: #333 !important; }
 
-        /* CHARACTER STATES */
-        #sonic {
-            position: absolute; width: 140px; height: 140px;
-            background: url(https://docs.google.com/drawings/d/e/2PACX-1vSU2kymmebcoyonKiAeVWtczSiq12r7yeOqHpCD1P40lBrVvg-8P1cCEvyPFQMyNMn5G2g4cHHJT0Gz/pub?w=960&h=720);
-            background-size: 960px 720px; z-index: 5;
-        }
+        /* JUMP & ROLL BUTTONS */
+        .game-btn { position: absolute; bottom: 30px; width: 80px; height: 80px; border-radius: 50%; border: 5px solid white; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; z-index: 20; transition: 0.3s; cursor: pointer; text-shadow: 1px 1px #000; }
+        #jump-btn { left: 30px; background: #22c55e; } /* Green Jump Button */
+        #roll-btn { right: 30px; background: #555; cursor: not-allowed; } /* Grey Roll Button */
+        #roll-btn.ready { background: #1d4ed8; cursor: pointer; box-shadow: 0 0 20px #00BFFF; } /* Blue Roll Button */
+
+        /* SPRITES */
+        #sonic { position: absolute; width: 140px; height: 140px; background: url(https://docs.google.com/drawings/d/e/2PACX-1vSU2kymmebcoyonKiAeVWtczSiq12r7yeOqHpCD1P40lBrVvg-8P1cCEvyPFQMyNMn5G2g4cHHJT0Gz/pub?w=960&h=720); background-size: 960px 720px; z-index: 5; transition: top 0.1s linear; }
         .state-run { background-position: left 0in top -1in !important; }
-        .state-roll { 
-            background-position: left -1in top 0in !important; 
-            animation: fastSpin 0.15s infinite linear; 
-        }
+        .state-jump { background-position: left -2in top -1in !important; }
+        .state-roll { background-position: left -1in top 0in !important; animation: fastSpin 0.15s infinite linear; }
         @keyframes fastSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
         #ring { position: absolute; width: 60px; height: 60px; background: url(https://docs.google.com/drawings/d/e/2PACX-1vSU2kymmebcoyonKiAeVWtczSiq12r7yeOqHpCD1P40lBrVvg-8P1cCEvyPFQMyNMn5G2g4cHHJT0Gz/pub?w=960&h=720) left -1in top 0in; }
+        
+        /* OBSTACLE */
+        .obstacle { position: absolute; width: 50px; height: 50px; background: #ef4444; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); bottom: 150px; z-index: 4; }
     </style>
 </head>
 <body>
 
     <div id="hud">
-        RINGS: <span id="ring-count">000</span>
-        <div id="boost-container">
-            <div id="boost-bar"><div id="boost-fill"></div></div>
-            <div id="roll-btn">ROLL</div>
+        RINGS: <span id="ring-count">000</span><br>
+        <div id="hearts">
+            <div class="heart" id="h1"></div><div class="heart" id="h2"></div><div class="heart" id="h3"></div>
         </div>
     </div>
+    
+    <div id="jump-btn" class="game-btn">JUMP</div>
+    <div id="roll-btn" class="game-btn">ROLL</div>
 
-    <div id="game-area">
-        <div id="sonic" class="state-run" style="top:350px; left:100px;"></div>
-        <div id="ring"></div>
-    </div>
+    <div id="sonic" class="state-run" style="top:350px; left:100px;"></div>
+    <div id="ring"></div>
 
     <script>
-        var rings = 0;
-        var boost = 0;
-        var isRolling = false;
-        // Official Ring Sound
-        var ringAudio = new Audio('https://docs.google.com/uc?export=download&id=1ETKypIjRUWk4m4rle2X9nihfnzY7Ur4C'); 
+        var rings = 0, boost = 0, health = 3, isRolling = false, isJumping = false, isInvincible = false;
+        var ringAudio = new Audio('https://docs.google.com/uc?export=download&id=1ETKypIjRUWk4m4rle2X9nihfnzY7Ur4C');
 
-        // 1. MANUAL BOOST BUTTON LOGIC
-        $("#roll-btn").click(function() {
-            if (boost >= 70 && !isRolling) {
-                startSuperRoll();
-            }
-        });
-
-        function startSuperRoll() {
-            isRolling = true;
-            $("#roll-btn").addClass("active").text("GO!");
-            $("#sonic").removeClass("state-run").addClass("state-roll");
-            
-            // Boost lasts for 5 seconds then resets
-            setTimeout(() => {
-                isRolling = false;
-                boost = 0;
-                $("#roll-btn").removeClass("active ready").css("background", "#555").text("ROLL");
-                $("#sonic").removeClass("state-roll").addClass("state-run");
-                $("#boost-fill").css("width", "0%");
-            }, 5000);
-        }
-
-        // 2. RING COLLECTION & SOUND
-        function collectRing() {
-            rings++;
-            // Play audio every time a ring is collected
-            ringAudio.pause();
-            ringAudio.currentTime = 0;
-            ringAudio.play();
-
-            $("#ring-count").text(rings);
-
-            // Increase boost meter per ring
-            if (boost < 100) {
-                boost += 5;
-                $("#boost-fill").css("width", boost + "%");
-                
-                // Change button color to blue if >= 70%
-                if (boost >= 70) {
-                    $("#roll-btn").addClass("ready");
-                }
-            }
-        }
-
-        // 3. MOVEMENT
-        $(window).keydown(function(e) {
-            let sPos = $("#sonic").position();
-            let moveSpeed = isRolling ? 80 : 40;
-            if (e.key == "ArrowRight") $("#sonic").css({"left": sPos.left + moveSpeed, "transform": "scaleX(1)"});
-            if (e.key == "ArrowLeft") $("#sonic").css({"left": sPos.left - moveSpeed, "transform": "scaleX(-1)"});
-        });
-
-        // 4. GAME LOOP (Falling Rings)
-        function spawnRing() {
-            let rx = Math.random() * (window.innerWidth - 100);
-            $("#ring").css({"top": "-50px", "left": rx}).show();
-            $("#ring").animate({ top: "400px" }, 2000, "linear", function() {
-                let sPos = $("#sonic").position().left;
-                let rPos = $("#ring").position().left;
-                if (rPos > sPos - 50 && rPos < sPos + 100) {
-                    collectRing();
-                }
-                spawnRing();
+        // JUMP LOGIC
+        function doJump() {
+            if (isJumping) return;
+            isJumping = true;
+            $("#sonic").removeClass("state-run").addClass("state-jump");
+            $("#sonic").animate({ top: "-=180px" }, 400).animate({ top: "+=180px" }, 400, function() {
+                isJumping = false;
+                $("#sonic").removeClass("state-jump").addClass(isRolling ? "state-roll" : "state-run");
             });
         }
-        spawnRing();
+
+        $("#jump-btn").on('touchstart click', function(e) { e.preventDefault(); doJump(); });
+        $(window).keydown(function(e) { if(e.key === " " || e.key === "ArrowUp") doJump(); });
+
+        // ROLL BUTTON LOGIC
+        $("#roll-btn").click(function() {
+            if (boost >= 70 && !isRolling) {
+                isRolling = true;
+                $(this).addClass("active").text("FAST!");
+                $("#sonic").addClass("state-roll");
+                setTimeout(() => {
+                    isRolling = false; boost = 0;
+                    $(this).removeClass("active ready").css("background", "#555").text("ROLL");
+                    $("#sonic").removeClass("state-roll").addClass("state-run");
+                }, 5000);
+            }
+        });
+
+        function takeDamage() {
+            if (isInvincible) return;
+            health--;
+            isInvincible = true;
+            $(`#h${health + 1}`).addClass("lost");
+            $("#sonic").css("opacity", "0.5");
+            if (health <= 0) { alert("Game Over!"); location.reload(); }
+            setTimeout(() => { isInvincible = false; $("#sonic").css("opacity", "1"); }, 1500);
+        }
+
+        // FALLING OBJECTS (Rings & Spikes)
+        function spawnObject() {
+            let isSpike = Math.random() > 0.7; // 30% chance for a spike
+            let obj = isSpike ? $('<div class="obstacle"></div>').appendTo('body') : $("#ring");
+            let rx = Math.random() * (window.innerWidth - 100);
+            
+            obj.css({"top": "-100px", "left": rx}).show();
+            obj.animate({ top: "450px" }, 2000, "linear", function() {
+                let s = $("#sonic").position();
+                let o = $(this).position();
+                
+                if (Math.abs(s.left - o.left) < 80 && Math.abs(s.top - o.top) < 100) {
+                    if (isSpike) { takeDamage(); } 
+                    else { 
+                        rings++; ringAudio.pause(); ringAudio.currentTime = 0; ringAudio.play(); //
+                        $("#ring-count").text(rings);
+                        if (boost < 70) { boost += 10; if (boost >= 70) $("#roll-btn").addClass("ready"); } //
+                    }
+                }
+                if (isSpike) $(this).remove();
+                spawnObject();
+            });
+        }
+
+        $(window).keydown(function(e) {
+            let sPos = $("#sonic").position();
+            let move = isRolling ? 80 : 40;
+            if (e.key == "ArrowRight") $("#sonic").css("left", sPos.left + move);
+            if (e.key == "ArrowLeft") $("#sonic").css("left", sPos.left - move);
+        });
+
+        spawnObject();
     </script>
 </body>
 </html>
