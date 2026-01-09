@@ -9,119 +9,118 @@
             background-size: cover; background-position: center; font-family: 'Courier New', monospace;
         }
 
-        /* HUD & HEARTS */
-        #hud { position: absolute; top: 10px; left: 20px; color: #facc15; font-size: 28px; font-weight: bold; text-shadow: 2px 2px #000; z-index: 10; }
-        .heart { display: inline-block; width: 25px; height: 25px; background: red; clip-path: polygon(50% 15%, 80% 0%, 100% 30%, 50% 90%, 0% 30%, 20% 0%); margin-right: 5px; }
-        .lost { background: #333 !important; }
+        /* 1. HOME MENU */
+        #home-menu {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.85); z-index: 100;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            color: white; text-align: center;
+        }
 
-        /* JUMP & ROLL BUTTONS */
-        .game-btn { position: absolute; bottom: 30px; width: 80px; height: 80px; border-radius: 50%; border: 5px solid white; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; z-index: 20; transition: 0.3s; cursor: pointer; text-shadow: 1px 1px #000; }
-        #jump-btn { left: 30px; background: #22c55e; } /* Green Jump Button */
-        #roll-btn { right: 30px; background: #555; cursor: not-allowed; } /* Grey Roll Button */
-        #roll-btn.ready { background: #1d4ed8; cursor: pointer; box-shadow: 0 0 20px #00BFFF; } /* Blue Roll Button */
+        /* 2. LOADING SCREEN (Hidden initially) */
+        #loading-screen {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 150; flex-direction: column; align-items: center; justify-content: center;
+            color: #60a5fa;
+        }
+        #load-bar-bg { width: 300px; height: 10px; background: #333; border: 2px solid white; margin-top: 20px; border-radius: 5px; overflow: hidden; }
+        #load-bar-fill { width: 0%; height: 100%; background: #60a5fa; transition: 0.1s; }
 
+        .menu-btn {
+            background: #1d4ed8; color: white; border: 3px solid white;
+            padding: 15px 50px; margin: 10px; font-size: 24px; cursor: pointer;
+            width: 320px; transition: 0.3s; border-radius: 10px;
+        }
+
+        /* 3. GAME AREA */
+        #game-area { display: none; width: 100%; height: 100%; position: relative; }
+        #hud { position: absolute; top: 10px; left: 20px; color: #facc15; font-size: 24px; font-weight: bold; z-index: 10; text-shadow: 2px 2px #000; }
+        
         /* SPRITES */
-        #sonic { position: absolute; width: 140px; height: 140px; background: url(https://docs.google.com/drawings/d/e/2PACX-1vSU2kymmebcoyonKiAeVWtczSiq12r7yeOqHpCD1P40lBrVvg-8P1cCEvyPFQMyNMn5G2g4cHHJT0Gz/pub?w=960&h=720); background-size: 960px 720px; z-index: 5; transition: top 0.1s linear; }
-        .state-run { background-position: left 0in top -1in !important; }
-        .state-jump { background-position: left -2in top -1in !important; }
+        #sonic {
+            position: absolute; top: 350px; left: 100px; width: 140px; height: 140px;
+            background: url(https://docs.google.com/drawings/d/e/2PACX-1vSU2kymmebcoyonKiAeVWtczSiq12r7yeOqHpCD1P40lBrVvg-8P1cCEvyPFQMyNMn5G2g4cHHJT0Gz/pub?w=960&h=720);
+            background-size: 960px 720px; z-index: 5; background-position: left 0in top -1in;
+        }
         .state-roll { background-position: left -1in top 0in !important; animation: fastSpin 0.15s infinite linear; }
         @keyframes fastSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-
-        #ring { position: absolute; width: 60px; height: 60px; background: url(https://docs.google.com/drawings/d/e/2PACX-1vSU2kymmebcoyonKiAeVWtczSiq12r7yeOqHpCD1P40lBrVvg-8P1cCEvyPFQMyNMn5G2g4cHHJT0Gz/pub?w=960&h=720) left -1in top 0in; }
         
-        /* OBSTACLE */
-        .obstacle { position: absolute; width: 50px; height: 50px; background: #ef4444; clip-path: polygon(50% 0%, 0% 100%, 100% 100%); bottom: 150px; z-index: 4; }
+        #ring { position: absolute; width: 60px; height: 60px; background: url(https://docs.google.com/drawings/d/e/2PACX-1vSU2kymmebcoyonKiAeVWtczSiq12r7yeOqHpCD1P40lBrVvg-8P1cCEvyPFQMyNMn5G2g4cHHJT0Gz/pub?w=960&h=720) left -1in top 0in; }
     </style>
 </head>
 <body>
 
-    <div id="hud">
-        RINGS: <span id="ring-count">000</span><br>
-        <div id="hearts">
-            <div class="heart" id="h1"></div><div class="heart" id="h2"></div><div class="heart" id="h3"></div>
-        </div>
+    <div id="home-menu">
+        <h1 style="font-size: 50px; margin-bottom: 40px;">KOSHISH RUNNER</h1>
+        <button class="menu-btn" onclick="startLoading()">PLAY GAME</button>
+        <button class="menu-btn" onclick="alert('High Score: ' + (localStorage.getItem('sonicHS') || 0))">HIGH SCORE</button>
     </div>
-    
-    <div id="jump-btn" class="game-btn">JUMP</div>
-    <div id="roll-btn" class="game-btn">ROLL</div>
 
-    <div id="sonic" class="state-run" style="top:350px; left:100px;"></div>
-    <div id="ring"></div>
+    <div id="loading-screen">
+        <h2 id="load-text">LOADING LEVEL...</h2>
+        <div id="load-bar-bg"><div id="load-bar-fill"></div></div>
+    </div>
+
+    <div id="game-area">
+        <div id="hud">RINGS: <span id="ring-count">0</span></div>
+        <div id="sonic"></div>
+        <div id="ring"></div>
+    </div>
 
     <script>
-        var rings = 0, boost = 0, health = 3, isRolling = false, isJumping = false, isInvincible = false;
+        var rings = 0;
         var ringAudio = new Audio('https://docs.google.com/uc?export=download&id=1ETKypIjRUWk4m4rle2X9nihfnzY7Ur4C');
 
-        // JUMP LOGIC
-        function doJump() {
-            if (isJumping) return;
-            isJumping = true;
-            $("#sonic").removeClass("state-run").addClass("state-jump");
-            $("#sonic").animate({ top: "-=180px" }, 400).animate({ top: "+=180px" }, 400, function() {
-                isJumping = false;
-                $("#sonic").removeClass("state-jump").addClass(isRolling ? "state-roll" : "state-run");
-            });
-        }
-
-        $("#jump-btn").on('touchstart click', function(e) { e.preventDefault(); doJump(); });
-        $(window).keydown(function(e) { if(e.key === " " || e.key === "ArrowUp") doJump(); });
-
-        // ROLL BUTTON LOGIC
-        $("#roll-btn").click(function() {
-            if (boost >= 70 && !isRolling) {
-                isRolling = true;
-                $(this).addClass("active").text("FAST!");
-                $("#sonic").addClass("state-roll");
-                setTimeout(() => {
-                    isRolling = false; boost = 0;
-                    $(this).removeClass("active ready").css("background", "#555").text("ROLL");
-                    $("#sonic").removeClass("state-roll").addClass("state-run");
-                }, 5000);
-            }
-        });
-
-        function takeDamage() {
-            if (isInvincible) return;
-            health--;
-            isInvincible = true;
-            $(`#h${health + 1}`).addClass("lost");
-            $("#sonic").css("opacity", "0.5");
-            if (health <= 0) { alert("Game Over!"); location.reload(); }
-            setTimeout(() => { isInvincible = false; $("#sonic").css("opacity", "1"); }, 1500);
-        }
-
-        // FALLING OBJECTS (Rings & Spikes)
-        function spawnObject() {
-            let isSpike = Math.random() > 0.7; // 30% chance for a spike
-            let obj = isSpike ? $('<div class="obstacle"></div>').appendTo('body') : $("#ring");
-            let rx = Math.random() * (window.innerWidth - 100);
+        function startLoading() {
+            $("#home-menu").hide();
+            $("#loading-screen").css("display", "flex");
             
-            obj.css({"top": "-100px", "left": rx}).show();
-            obj.animate({ top: "450px" }, 2000, "linear", function() {
-                let s = $("#sonic").position();
-                let o = $(this).position();
+            let progress = 0;
+            let interval = setInterval(() => {
+                progress += Math.floor(Math.random() * 10) + 2;
+                $("#load-bar-fill").css("width", progress + "%");
                 
-                if (Math.abs(s.left - o.left) < 80 && Math.abs(s.top - o.top) < 100) {
-                    if (isSpike) { takeDamage(); } 
-                    else { 
-                        rings++; ringAudio.pause(); ringAudio.currentTime = 0; ringAudio.play(); //
-                        $("#ring-count").text(rings);
-                        if (boost < 70) { boost += 10; if (boost >= 70) $("#roll-btn").addClass("ready"); } //
-                    }
+                if (progress >= 100) {
+                    clearInterval(interval);
+                    $("#load-bar-fill").css("width", "100%");
+                    setTimeout(initGame, 500);
                 }
-                if (isSpike) $(this).remove();
-                spawnObject();
-            });
+            }, 100);
         }
 
+        function initGame() {
+            $("#loading-screen").fadeOut();
+            $("#game-area").fadeIn();
+            spawnRing();
+        }
+
+        function collectRing() {
+            rings++;
+            ringAudio.pause(); ringAudio.currentTime = 0; ringAudio.play();
+            $("#ring-count").text(rings);
+            
+            // Save High Score
+            let hs = localStorage.getItem('sonicHS') || 0;
+            if (rings > hs) localStorage.setItem('sonicHS', rings);
+        }
+
+        // MOVEMENT
         $(window).keydown(function(e) {
             let sPos = $("#sonic").position();
-            let move = isRolling ? 80 : 40;
-            if (e.key == "ArrowRight") $("#sonic").css("left", sPos.left + move);
-            if (e.key == "ArrowLeft") $("#sonic").css("left", sPos.left - move);
+            if (e.key == "ArrowRight") $("#sonic").css({"left": sPos.left + 40, "transform": "scaleX(1)"});
+            if (e.key == "ArrowLeft") $("#sonic").css({"left": sPos.left - 40, "transform": "scaleX(-1)"});
         });
 
-        spawnObject();
+        function spawnRing() {
+            let rx = Math.random() * (window.innerWidth - 100);
+            $("#ring").css({"top": "-50px", "left": rx}).show();
+            $("#ring").animate({ top: "450px" }, 2000, "linear", function() {
+                let sPos = $("#sonic").position();
+                let rPos = $("#ring").position();
+                if (Math.abs(sPos.left - rPos.left) < 80) collectRing();
+                spawnRing();
+            });
+        }
     </script>
 </body>
 </html>
