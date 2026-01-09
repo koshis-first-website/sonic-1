@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { background: #000; margin: 0; overflow: hidden; font-family: 'Courier New', monospace; }
+
+        /* HUD STYLES */
+        #hud { position: absolute; top: 10px; left: 100px; color: white; font-size: 24px; text-shadow: 2px 2px black; z-index: 10; }
+        
+        /* BOOST METER & BUTTON */
+        #boost-container { margin-top: 10px; display: flex; align-items: center; gap: 15px; }
+        #boost-bar { width: 150px; height: 12px; background: #333; border: 2px solid white; border-radius: 5px; overflow: hidden; }
+        #boost-fill { height: 100%; width: 0%; background: #00BFFF; transition: 0.1s; }
+        
+        #roll-btn {
+            width: 60px; height: 60px; border-radius: 50%; border: 4px solid white;
+            background: #555; /* Default Gray */
+            color: white; font-weight: bold; cursor: not-allowed;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 0 10px rgba(0,0,0,0.5); transition: 0.3s;
+        }
+        #roll-btn.ready { background: #1d4ed8; cursor: pointer; box-shadow: 0 0 20px #00BFFF; }
+        #roll-btn.active { background: #facc15; animation: pulse 0.5s infinite; }
+
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+
+        /* CHARACTER STATES */
+        #sonic {
+            position: absolute; width: 140px; height: 140px;
+            background: url(https://docs.google.com/drawings/d/e/2PACX-1vSU2kymmebcoyonKiAeVWtczSiq12r7yeOqHpCD1P40lBrVvg-8P1cCEvyPFQMyNMn5G2g4cHHJT0Gz/pub?w=960&h=720);
+            background-size: 960px 720px; z-index: 5;
+        }
+        .state-run { background-position: left 0in top -1in !important; }
+        .state-roll { 
+            background-position: left -1in top 0in !important; 
+            animation: fastSpin 0.15s infinite linear; 
+        }
+        @keyframes fastSpin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+        #ring { position: absolute; width: 60px; height: 60px; background: url(https://docs.google.com/drawings/d/e/2PACX-1vSU2kymmebcoyonKiAeVWtczSiq12r7yeOqHpCD1P40lBrVvg-8P1cCEvyPFQMyNMn5G2g4cHHJT0Gz/pub?w=960&h=720) left -1in top 0in; }
+    </style>
+</head>
+<body>
+
+    <div id="hud">
+        RINGS: <span id="ring-count">000</span>
+        <div id="boost-container">
+            <div id="boost-bar"><div id="boost-fill"></div></div>
+            <div id="roll-btn">ROLL</div>
+        </div>
+    </div>
+
+    <div id="game-area">
+        <div id="sonic" class="state-run" style="top:350px; left:100px;"></div>
+        <div id="ring"></div>
+    </div>
+
+    <script>
+        var rings = 0;
+        var boost = 0;
+        var isRolling = false;
+        // Official Ring Sound
+        var ringAudio = new Audio('https://docs.google.com/uc?export=download&id=1ETKypIjRUWk4m4rle2X9nihfnzY7Ur4C'); 
+
+        // 1. MANUAL BOOST BUTTON LOGIC
+        $("#roll-btn").click(function() {
+            if (boost >= 70 && !isRolling) {
+                startSuperRoll();
+            }
+        });
+
+        function startSuperRoll() {
+            isRolling = true;
+            $("#roll-btn").addClass("active").text("GO!");
+            $("#sonic").removeClass("state-run").addClass("state-roll");
+            
+            // Boost lasts for 5 seconds then resets
+            setTimeout(() => {
+                isRolling = false;
+                boost = 0;
+                $("#roll-btn").removeClass("active ready").css("background", "#555").text("ROLL");
+                $("#sonic").removeClass("state-roll").addClass("state-run");
+                $("#boost-fill").css("width", "0%");
+            }, 5000);
+        }
+
+        // 2. RING COLLECTION & SOUND
+        function collectRing() {
+            rings++;
+            // Play audio every time a ring is collected
+            ringAudio.pause();
+            ringAudio.currentTime = 0;
+            ringAudio.play();
+
+            $("#ring-count").text(rings);
+
+            // Increase boost meter per ring
+            if (boost < 100) {
+                boost += 5;
+                $("#boost-fill").css("width", boost + "%");
+                
+                // Change button color to blue if >= 70%
+                if (boost >= 70) {
+                    $("#roll-btn").addClass("ready");
+                }
+            }
+        }
+
+        // 3. MOVEMENT
+        $(window).keydown(function(e) {
+            let sPos = $("#sonic").position();
+            let moveSpeed = isRolling ? 80 : 40;
+            if (e.key == "ArrowRight") $("#sonic").css({"left": sPos.left + moveSpeed, "transform": "scaleX(1)"});
+            if (e.key == "ArrowLeft") $("#sonic").css({"left": sPos.left - moveSpeed, "transform": "scaleX(-1)"});
+        });
+
+        // 4. GAME LOOP (Falling Rings)
+        function spawnRing() {
+            let rx = Math.random() * (window.innerWidth - 100);
+            $("#ring").css({"top": "-50px", "left": rx}).show();
+            $("#ring").animate({ top: "400px" }, 2000, "linear", function() {
+                let sPos = $("#sonic").position().left;
+                let rPos = $("#ring").position().left;
+                if (rPos > sPos - 50 && rPos < sPos + 100) {
+                    collectRing();
+                }
+                spawnRing();
+            });
+        }
+        spawnRing();
+    </script>
+</body>
+</html>
